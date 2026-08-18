@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-label="Animation of boundary-tag coalescing in hs_free">
+  <title>hs_free: boundary-tag coalescing of adjacent free blocks</title>
+
+  <text x="20" y="28" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#8b949e">HeapSmith &#8212; boundary-tag coalescing inside hs_free()</text>
+  <text x="20" y="50" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">Adjacent blocks in the sbrk bump arena. Blue = in use, green = free, amber = merged this step.</text>
+
+  <text x="20" y="90" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">arena</text>
+
+  <!-- arena outline -->
+  <rect x="60" y="100" width="760" height="56" fill="none" stroke="#8b949e" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Block A: always in use -->
+  <rect x="60" y="100" width="150" height="56" fill="#5b7fc4" stroke="#93b4e8" stroke-width="1.5"/>
+  <text x="135" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">A &#183; in use</text>
+
+  <!-- Block B: free, disappears once merged backward -->
+  <g>
+    <rect x="210" y="100" width="170" height="56" fill="#3f9e6c" stroke="#79d6a6" stroke-width="1.5"/>
+    <text x="295" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">B &#183; free</text>
+    <animate attributeName="opacity" values="1;1;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Block D: free, disappears once merged forward -->
+  <g>
+    <rect x="580" y="100" width="240" height="56" fill="#3f9e6c" stroke="#79d6a6" stroke-width="1.5"/>
+    <text x="700" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">D &#183; free</text>
+    <animate attributeName="opacity" values="1;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Block C: the block being freed; grows as it swallows D then B -->
+  <rect y="100" height="56" stroke="#e8c98a" stroke-width="1.5">
+    <animate attributeName="x" values="380;380;380;210;210;210" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+    <animate attributeName="width" values="200;200;440;610;610;610" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+    <animate attributeName="fill" values="#5b7fc4;#3f9e6c;#c9922f;#c9922f;#3f9e6c;#3f9e6c" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+    <animate attributeName="stroke" values="#93b4e8;#79d6a6;#e8c98a;#e8c98a;#79d6a6;#79d6a6" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Labels for block C across phases -->
+  <text x="480" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">C &#183; in use
+    <animate attributeName="opacity" values="1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="480" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">C &#183; free, footer written
+    <animate attributeName="opacity" values="0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="600" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">C + D merged forward
+    <animate attributeName="opacity" values="0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="515" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">B + C + D merged backward
+    <animate attributeName="opacity" values="0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="515" y="133" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#f0f6fc">one free block, on the class free list
+    <animate attributeName="opacity" values="0;0;0;0;1;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Step caption -->
+  <text x="60" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#c9922f">1. hs_free(ptr): clear the in-use bit, write the boundary-tag footer
+    <animate attributeName="opacity" values="0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="60" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#c9922f">2. next block is free: fl_remove it from its size class, extend size
+    <animate attributeName="opacity" values="0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="60" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#c9922f">3. prev_in_use bit is 0: footer gives prev size in O(1), fl_remove and merge back
+    <animate attributeName="opacity" values="0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="60" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#c9922f">4. fl_push the coalesced block onto g_classes[idx] under that class lock
+    <animate attributeName="opacity" values="0;0;0;0;1;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+  <text x="60" y="186" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#8b949e">Start: A and C are live, B and D are already on their free lists
+    <animate attributeName="opacity" values="1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- insertion arrow, only in the final phase -->
+  <g>
+    <path d="M 515 160 L 515 240" stroke="#c9922f" stroke-width="2" fill="none"/>
+    <path d="M 509 232 L 515 244 L 521 232 Z" fill="#c9922f"/>
+    <animate attributeName="opacity" values="0;0;0;0;1;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- segregated free lists -->
+  <text x="60" y="234" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">segregated free lists, one mutex each</text>
+  <g font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">
+    <rect x="60" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="93" y="269">8 B</text>
+    <rect x="134" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="167" y="269">16 B</text>
+    <rect x="208" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="241" y="269">32 B</text>
+    <rect x="282" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="315" y="269">64 B</text>
+    <rect x="356" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="389" y="269">128 B</text>
+    <rect x="430" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="463" y="269">256 B</text>
+    <rect x="578" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="611" y="269">1 KiB</text>
+    <rect x="652" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="685" y="269">2 KiB</text>
+    <rect x="726" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/><text x="759" y="269">4 KiB</text>
+  </g>
+  <g>
+    <rect x="504" y="248" width="66" height="34" fill="#c9922f" stroke="#e8c98a" stroke-width="1.5"/>
+    <text x="537" y="269" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#f0f6fc">512 B</text>
+    <animate attributeName="opacity" values="0;0;0;0;1;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </g>
+  <g>
+    <rect x="504" y="248" width="66" height="34" fill="none" stroke="#8b949e" stroke-width="1"/>
+    <text x="537" y="269" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">512 B</text>
+    <animate attributeName="opacity" values="1;1;1;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  </g>
+
+  <text x="60" y="306" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">Blocks over 4 KiB bypass the arena entirely: mmap on alloc, munmap on free.</text>
+</svg>

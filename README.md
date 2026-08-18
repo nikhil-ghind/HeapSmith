@@ -4,6 +4,47 @@ A thread-safe `malloc` replacement written in C implementing **segregated free l
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+    caller["Caller<br/>hs_malloc / hs_calloc / hs_realloc / hs_free"]
+    preload["LD_PRELOAD wrapper<br/>malloc, free, calloc, realloc"]
+
+    subgraph core["allocator.c"]
+        idx["size_class_index()<br/>round up to 8..4096 B"]
+        pop["fl_pop / fl_push<br/>intrusive doubly-linked free list"]
+        split["_hs_split()<br/>carve off the remainder"]
+        coal["_hs_coalesce()<br/>merge with next, then prev"]
+        stats["hs_stats()<br/>usage, peak, fragmentation"]
+    end
+
+    classes["g_classes[0..9]<br/>SizeClass: head, counters, own pthread_mutex"]
+    arena["sbrk arena<br/>bump pointer, 256 KiB chunks, g_arena_lock"]
+    large["mmap / munmap path<br/>blocks over 4096 B, g_large_lock"]
+    tc["thread_cache.c<br/>__thread magazine, 16 blocks per class<br/>(built, not yet wired into the hot path)"]
+
+    preload --> caller
+    caller --> idx
+    idx -->|"size over 4096 B"| large
+    idx -->|"small or medium"| pop
+    pop -->|"hit"| split
+    pop -->|"miss"| arena
+    arena --> split
+    pop <--> classes
+    caller -->|"free"| coal
+    coal -->|"fl_remove neighbours"| classes
+    coal -->|"fl_push merged block"| classes
+    caller --> stats
+    tc -.->|"tc_alloc / tc_free"| classes
+```
+
+The free path is where the interesting work happens: a freed block clears its
+in-use bit, writes its boundary-tag footer, absorbs any free neighbour on either
+side, and only then joins a size-class free list.
+
+<img src="docs/coalescing.svg" alt="Animated walkthrough of a freed block coalescing with its neighbours and landing on a size-class free list" width="880">
+
 ## Allocator Design
 
 ### Size Classes
@@ -55,12 +96,6 @@ hs_free(ptr):
   4. Insert merged block into the appropriate size class free list
 ```
 
-```
-Before:  [A: in_use][B: free][C: in_use][D: free]
-free(A): [AB: free     ][C: in_use][D: free]
-free(C): [AB: free     ][CD: free          ]
-```
-
 ### Arena
 
 Small allocations (≤ 4 096 B) are carved from a `sbrk`-based bump-pointer arena.  The arena grows in 256 KiB chunks on demand.  Large allocations use `mmap(MAP_ANONYMOUS)` and are `munmap`-ed directly on free.
@@ -73,27 +108,8 @@ When a free block is larger than needed (e.g., a 128 B block is used for a 32 B 
 
 ## Thread Safety
 
-```
-┌─────────────────────────────────────────┐
-│  Thread 1          Thread 2          Thread N   │
-│  tc_alloc/free     tc_alloc/free     tc_alloc/free │
-│  (no lock)         (no lock)         (no lock)  │
-└───────────┬────────────┬──────────────┬─────────┘
-            │ cache miss  │              │
-            ▼             ▼              ▼
-┌───────────────────────────────────────────────────┐
-│  g_classes[0].lock  g_classes[1].lock  ...        │
-│  (per-size-class mutex — concurrent sizes → no    │
-│   contention between different size requests)     │
-└───────────────────────────────────────────────────┘
-            │ arena exhausted
-            ▼
-┌──────────────────────────────────────────────┐
-│  g_arena_lock  (sbrk expansion, infrequent)  │
-└──────────────────────────────────────────────┘
-```
 
-- **Thread cache** (`__thread ThreadCache`): each thread caches up to 16 freed blocks per size class.  Hits require zero locking.
+- **Thread cache** (`__thread ThreadCache` in `src/thread_cache.c`): each thread caches up to 16 freed blocks per size class, and hits require zero locking.  The magazine is implemented and unit-testable, but `hs_malloc`/`hs_free` do not call `tc_alloc`/`tc_free` yet -- wiring it into the hot path is the next step.
 - **Per-size-class locks**: different threads allocating different size classes never contend.
 - **Large allocation lock**: separate mutex for `mmap`/`munmap` (rare path).
 
